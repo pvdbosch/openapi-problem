@@ -23,7 +23,7 @@ jobs:
     - name: Set release version in pom.xml
       run: |
          VERSION=`cut -d/ -f3 <<< $GITHUB_REF`
-         mvn -B versions:set -DnewVersion=$GITHUB_REF --file pom.xml
+         mvn -B versions:set -DnewVersion=$VERSION --file pom.xml
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
