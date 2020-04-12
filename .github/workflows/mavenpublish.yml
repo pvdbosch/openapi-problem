@@ -30,7 +30,7 @@ jobs:
       run: |
         mvn -B package --file pom.xml
         echo "::set-env name=ARTIFACT_FILE::`ls ./target/*.zip`"
-        echo "::set-env name=ARTIFACT_NAME::`cut -d/ -f3 <<<`ls ./target/*.zip`"
+        echo "::set-env name=ARTIFACT_NAME::`cut -d/ -f3 <<< $ARTIFACT_FILE"
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
