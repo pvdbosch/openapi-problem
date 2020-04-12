@@ -29,7 +29,8 @@ jobs:
     - name: Build with Maven
       run: |
         mvn -B package --file pom.xml
-        echo "::set-env name=ARTIFACT_FILE::`ls ./target/*.zip`"
+        ARTIFACT_FILE=`ls ./target/*.zip`
+        echo "::set-env name=ARTIFACT_FILE::$ARTIFACT_FILE"
         echo "::set-env name=ARTIFACT_NAME::`cut -d/ -f3 <<< $ARTIFACT_FILE`"
     - name: Create Release
       id: create_release
