@@ -1,11 +1,12 @@
 # This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
 # For more information see: https://github.com/actions/setup-java#apache-maven-with-a-settings-path
 
-name: Maven Package
+name: Create release on tag creation
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*' # Match tags that are version numbers
 
 jobs:
   build:
@@ -20,11 +21,40 @@ jobs:
         java-version: 1.8
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: ${{ github.workspace }} # location for the settings.xml file
-
+    - name: Set release version in pom.xml
+      run: |
+         VERSION=`cut -d/ -f3 <<< $GITHUB_REF`
+         VERSION=${VERSION:1}
+         mvn -B versions:set -DnewVersion=$VERSION --file pom.xml
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
-
-    - name: Publish to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+      run: |
+        mvn -B package --file pom.xml
+        ARTIFACT_FILE=`ls ./target/*.zip`
+        echo "::set-env name=ARTIFACT_FILE::$ARTIFACT_FILE"
+        echo "::set-env name=ARTIFACT_NAME::`cut -d/ -f3 <<< $ARTIFACT_FILE`"
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+            Changes:
+            - [placeholder]
+        draft: true
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.ARTIFACT_FILE }}
+        asset_name: ${{ env.ARTIFACT_NAME }}
+        asset_content_type: application/zip
+#    - name: Publish to GitHub Packages Apache Maven
+#      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+#      env:
+#        GITHUB_TOKEN: ${{ github.token }}
